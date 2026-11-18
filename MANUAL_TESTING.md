@@ -1,6 +1,6 @@
 # Chrome manual acceptance checklist (before store publication)
 
-This project has 12 passing offline Node.js tests, including mocked Chrome tab-group API calls. A full manual acceptance test in Google Chrome is still required.
+The project has offline Node.js tests, including mocked Chrome tab-group and duplicate-closure API calls. A full manual acceptance test in Google Chrome is still required.
 
 ## Installation
 
@@ -27,6 +27,20 @@ This project has 12 passing offline Node.js tests, including mocked Chrome tab-g
 - [ ] Close/reopen the same Amazon product URL with tracking parameters changed; confirm the stored label reappears.
 - [ ] Open Settings, add rule `WORK` for `example.com`, and verify it applies to multiple eligible tabs.
 - [ ] Clear all labels after confirmation and verify search no longer finds removed tag text.
+
+## Duplicate-tab review (v0.2)
+
+- [ ] Open two identical URLs in the same window. **Duplicates** shows a single set with both tabs, and an extra-tab count of 1.
+- [ ] Select an eligible duplicate but cancel the confirmation. Neither tab closes.
+- [ ] Select an eligible duplicate, accept the confirmation, and verify exactly one URL copy remains.
+- [ ] Add a third duplicate and select **Select same-window extras**. Verify one tab per window remains unselected.
+- [ ] With one matching URL in two different windows, bulk selection does not select a cross-window-only copy; individual selection is still possible.
+- [ ] Repeat with active, pinned, audible and highlighted tabs. Verify those entries cannot be selected for closure.
+- [ ] Start navigation on a selected tab before clicking Close. The action should refuse stale selections (test manually where possible).
+- [ ] Compare Amazon product URLs that differ only in `ref` query parameter. They remain distinct in the **Duplicates** view.
+- [ ] Confirm `chrome://extensions/` and incognito pages are not scanned or closed.
+- [ ] Verify that saved labels survive closing a duplicate tab and reopening the same page.
+- [ ] Verify no new Chrome permission requests are introduced.
 
 ## Edge cases
 

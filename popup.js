@@ -1,4 +1,5 @@
 import { canonicalPageKey, cleanAnnotation, getCategory, matchesTab, safeLabel } from './lib/core.js';
+import { closeReviewedDuplicates, findDuplicateGroups, suggestedDuplicateIds } from './lib/duplicates.js';
 
 const $ = (id) => document.getElementById(id);
 let allTabs = [];
@@ -7,6 +8,9 @@ let rules = undefined;
 let activeWindowId = null;
 let editingKey = null;
 let draftTabId = null;
+let view = 'all';
+let selectedDuplicateIds = new Set();
+let visibleDuplicateGroups = [];
 
 function element(tag, className, content) {
   const item = document.createElement(tag);
@@ -114,6 +118,69 @@ function makeTab(tab) {
   return card;
 }
 
+function renderDuplicateItem(tab, group) {
+  const isKeeper = tab.id === group.keepId;
+  const closable = group.closableIds.includes(tab.id);
+  const row = element('div', 'duplicate-item');
+  const check = document.createElement('input');
+  check.className = 'duplicate-check'; check.type = 'checkbox';
+  check.disabled = !closable;
+  check.checked = closable && selectedDuplicateIds.has(tab.id);
+  check.setAttribute('aria-label', `Select duplicate tab: ${tab.title || tab.url}`);
+  check.addEventListener('change', () => {
+    if (check.checked) selectedDuplicateIds.add(tab.id);
+    else selectedDuplicateIds.delete(tab.id);
+    updateDuplicateAction();
+  });
+  const content = element('div', 'duplicate-item-main');
+  content.append(
+    element('span', 'tab-title', annotationFor(tab).label || tab.title || 'Untitled page'),
+    element('span', 'tab-caption', `Window ${tab.windowId} · ${new URL(tab.url).hostname}`),
+  );
+  const flag = isKeeper ? 'Keep' : closable ? '' :
+    tab.active ? 'Active' : tab.pinned ? 'Pinned' : tab.audible ? 'Playing' :
+    tab.highlighted ? 'Selected' : 'Protected';
+  const open = element('button', 'duplicate-focus', 'Go to');
+  open.type = 'button'; open.addEventListener('click', () => openTab(tab));
+  row.append(check, content);
+  if (flag) row.append(element('span', 'duplicate-state', flag));
+  row.append(open);
+  return row;
+}
+
+function updateDuplicateAction() {
+  const button = $('closeDuplicates');
+  button.disabled = !selectedDuplicateIds.size;
+  button.textContent = `Close selected (${selectedDuplicateIds.size})`;
+}
+
+function renderDuplicates(scoped) {
+  const groups = findDuplicateGroups(scoped);
+  const query = $('search').value.trim();
+  visibleDuplicateGroups = query ? groups.filter((group) => group.tabs.some((tab) =>
+    matchesTab(tab, annotationFor(tab), query))) : groups;
+  const allowed = new Set(visibleDuplicateGroups.flatMap((group) => group.closableIds));
+  selectedDuplicateIds = new Set([...selectedDuplicateIds].filter((id) => allowed.has(id)));
+  updateDuplicateAction();
+  const results = $('results'); results.replaceChildren();
+  $('resultsTitle').textContent = `${visibleDuplicateGroups.length} duplicate sets`;
+  if (!visibleDuplicateGroups.length) {
+    const empty = element('div', 'empty');
+    empty.append(element('strong', '', 'No exact duplicate tabs found'),
+      element('span', '', 'DomainDock matches complete page URLs, including query strings and #fragments. Similar pages are not automatically treated as duplicates.'));
+    results.append(empty); return;
+  }
+  for (const group of visibleDuplicateGroups) {
+    const box = element('section', 'duplicate-group');
+    const first = group.tabs[0];
+    const site = getCategory(first.url, rules)?.title || new URL(group.key).hostname;
+    const groupTitle = element('div', 'duplicate-group-header', `${site} · ${group.tabs.length} copies`);
+    box.append(groupTitle);
+    for (const tab of group.tabs) box.append(renderDuplicateItem(tab, group));
+    results.append(box);
+  }
+}
+
 function render() {
   const scoped = allTabs.filter((tab) => $('allWindows').checked || tab.windowId === activeWindowId);
   const uniqueSites = new Set(scoped.map((tab) => getCategory(tab.url, rules)?.key));
@@ -123,6 +190,14 @@ function render() {
   $('tabCount').textContent = String(scoped.length);
   $('siteCount').textContent = String(uniqueSites.size);
   $('taggedCount').textContent = String(tagged.length);
+  $('duplicateCount').textContent = String(findDuplicateGroups(scoped).reduce((n, group) => n + group.tabs.length - 1, 0));
+  $('showAll').classList.toggle('active', view === 'all');
+  $('showAll').setAttribute('aria-pressed', String(view === 'all'));
+  $('showDuplicates').classList.toggle('active', view === 'duplicates');
+  $('showDuplicates').setAttribute('aria-pressed', String(view === 'duplicates'));
+  $('duplicateActions').hidden = view !== 'duplicates';
+  $('groupNow').hidden = view === 'duplicates';
+  if (view === 'duplicates') { renderDuplicates(scoped); return; }
 
   const query = $('search').value;
   const filtered = scoped.filter((tab) => matchesTab(tab, annotationFor(tab), query));
@@ -148,8 +223,32 @@ function render() {
   }
 }
 
-$('search').addEventListener('input', () => { editingKey = null; draftTabId = null; render(); });
-$('allWindows').addEventListener('change', render);
+$('search').addEventListener('input', () => { editingKey = null; draftTabId = null; selectedDuplicateIds.clear(); render(); });
+$('allWindows').addEventListener('change', () => { selectedDuplicateIds.clear(); render(); });
+$('showAll').addEventListener('click', () => { view = 'all'; selectedDuplicateIds.clear(); render(); });
+$('showDuplicates').addEventListener('click', () => { view = 'duplicates'; selectedDuplicateIds.clear(); render(); });
+$('selectExtras').addEventListener('click', () => {
+  selectedDuplicateIds = new Set(suggestedDuplicateIds(visibleDuplicateGroups));
+  render();
+  $('status').textContent = `${selectedDuplicateIds.size} same-window duplicate tabs selected for review`;
+});
+$('closeDuplicates').addEventListener('click', async () => {
+  const requested = [...selectedDuplicateIds];
+  if (!requested.length) return;
+  const accepted = window.confirm(`Close ${requested.length} selected duplicate tab(s)?\n\nTabs may contain unsaved data. Nothing is closed until you confirm.`);
+  if (!accepted) return;
+  const button = $('closeDuplicates'); button.disabled = true;
+  try {
+    const closed = await closeReviewedDuplicates(chrome, allTabs, requested);
+    selectedDuplicateIds.clear();
+    await refresh();
+    $('status').textContent = `${closed} duplicate tab(s) closed`;
+  } catch (error) {
+    selectedDuplicateIds.clear();
+    await refresh();
+    $('status').textContent = error.message || 'Unable to close selected tabs';
+  } finally { updateDuplicateAction(); }
+});
 $('settings').addEventListener('click', () => chrome.runtime.openOptionsPage());
 $('autoGroup').addEventListener('change', async (event) => {
   await chrome.storage.local.set({ autoGroup: event.target.checked });

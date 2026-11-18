@@ -60,3 +60,25 @@ h2 { font-size: 13px; font-weight: 700; }
 .empty span { font-size: 12px; display: block; margin-top: 8px; line-height: 1.5; }
 footer { text-align: center; font-size: 10px; color: #7885a3; border-top: 1px solid #242c42; padding: 11px 8px 12px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+
+/* Duplicate review: no close action happens without explicit user confirmation. */
+.view-tabs { margin: 0 19px 12px; display: flex; gap: 6px; }
+.view-tab { flex: 1; padding: 9px; font-size: 12px; color: #adb8d3; background: #171d30; border: 1px solid #303850; border-radius: 9px; }
+.view-tab.active { color: #f0f3ff; background: #31315c; border-color: #8982e3; font-weight: 700; }
+.duplicate-badge { margin-left: 5px; padding: 2px 6px; background: #333c55; border-radius: 8px; font-size: 11px; }
+.duplicate-actions { margin: 0 19px 10px; padding: 10px; border: 1px solid #343d5a; background: #171d2c; border-radius: 10px; }
+.duplicate-actions[hidden] { display: none; }
+.duplicate-actions p { font-size: 10px; color: #a5b1ce; line-height: 1.45; }
+.duplicate-buttons { display: flex; gap: 8px; padding-top: 9px; }
+.secondary, .danger-button { padding: 8px 9px; border-radius: 8px; border: 1px solid #464f73; background: #29334d; color: #e0e5f7; font-size: 10px; font-weight: 700; }
+.danger-button { margin-left: auto; border-color: #a24a57; background: #79313a; color: #fff; }
+.danger-button:hover { background: #9b3b49; }
+.duplicate-group { margin: 4px 6px 12px 0; padding: 8px; background: #111729; border: 1px solid #303b59; border-radius: 11px; }
+.duplicate-group-header { font-size: 11px; font-weight: 700; color: #c3cbee; padding: 3px 2px 8px; overflow-wrap: anywhere; }
+.duplicate-item { display: flex; align-items: center; gap: 9px; padding: 8px; margin-bottom: 5px; background: #1c2439; border-radius: 8px; }
+.duplicate-check { flex: 0 0 16px; accent-color: #ed8a8d; }
+.duplicate-item-main { min-width: 0; flex: 1; }
+.duplicate-item .tab-title { color: #f0f3ff; }
+.duplicate-state { font-size: 10px; color: #adbad7; white-space: nowrap; }
+.duplicate-focus { padding: 6px; font-size: 11px; border: 1px solid #465170; border-radius: 7px; background: transparent; color: #c8d2f0; }
+.duplicate-item .tab-caption { overflow-wrap: anywhere; }
