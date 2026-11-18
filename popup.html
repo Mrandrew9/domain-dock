@@ -30,9 +30,21 @@
       </div>
     </section>
 
+    <nav class="view-tabs" aria-label="Tab views">
+      <button id="showAll" class="view-tab active" type="button" aria-pressed="true">All tabs</button>
+      <button id="showDuplicates" class="view-tab" type="button" aria-pressed="false">Duplicates <span id="duplicateCount" class="duplicate-badge">0</span></button>
+    </nav>
+
     <div class="toolbar">
       <div><h2 id="resultsTitle">Your tabs</h2><small id="status" role="status"></small></div>
       <button id="groupNow" class="primary" type="button">Group now</button>
+    </div>
+    <div id="duplicateActions" class="duplicate-actions" hidden>
+      <p>Exact URL matches only. Active, pinned and audio-playing tabs are protected. Nothing closes automatically.</p>
+      <div class="duplicate-buttons">
+        <button id="selectExtras" class="secondary" type="button">Select same-window extras</button>
+        <button id="closeDuplicates" class="danger-button" type="button" disabled>Close selected (0)</button>
+      </div>
     </div>
 
     <section id="results" class="results" aria-label="Matching tabs" aria-live="polite"></section>

@@ -1,26 +1,25 @@
-# Publish DomainDock to your GitHub profile
+# Update the existing DomainDock GitHub repository
 
-The bundled source is a normal Git repository project. The assistant could prepare the code, but the available GitHub integration does not expose a repository-creation action, so these steps must be done with your GitHub account.
+The public repository already exists at https://github.com/Mrandrew9/domain-dock .
+Do **not** create a new repository or run `git init` in your home directory.
 
-1. In GitHub, open https://github.com/new.
-2. Repository name: `domain-dock`. Description: `Local-first Chrome extension to group tabs by domain and find pages using searchable labels, tags, and notes.`
-3. Visibility: **Public** (if you want it on your public profile). Leave *Add README* and *Add .gitignore* unchecked; this source already includes them.
-4. Unzip `DomainDock-GitHub-Source-v0.1.0.zip` to a local folder. Open Terminal in that folder.
-5. Run (replace `YOUR_USERNAME` with your account name):
+## Safely apply v0.2 to your existing clone
+
+1. Open Terminal from your existing local `domain-dock` Git repository folder and run `git status`.
+2. Make sure your working tree is clean. If you have local changes, commit/stash them first.
+3. Create a branch: `git switch -c feat/duplicate-tab-review`.
+4. Copy the new and updated files from the v0.2 source ZIP into that existing Git repository folder, keeping the directory structure. Do **not** overwrite `.git` (not included in this ZIP).
+5. Run `npm run check` (Node.js 18+). Verify no unexpected file changes with `git diff --stat`.
+6. Test via `chrome://extensions` → DomainDock → **Reload**, then manually perform the duplicate-review acceptance tests in `MANUAL_TESTING.md`.
+7. Commit and push:
 
 ```bash
-git init -b main
-git add .
-git commit -m "feat: initial DomainDock MV3 tab grouper and tagged finder"
-git remote add origin https://github.com/YOUR_USERNAME/domain-dock.git
-git push -u origin main
+git add README.md PRIVACY.md MANUAL_TESTING.md PUBLISHING.md LICENSE manifest.json package.json popup.html popup.css popup.js lib/duplicates.js tests/duplicates.test.js
+git commit -m "feat: add reviewed duplicate-tab detection"
+git push -u origin feat/duplicate-tab-review
 ```
 
-6. In GitHub **About**, set topics: `chrome-extension`, `manifest-v3`, `tab-manager`, `javascript`, `browser-extension`, `productivity`.
-7. Run `npm run check`, and manually install/verify the extension using [MANUAL_TESTING.md](MANUAL_TESTING.md) before publishing the first GitHub Release or submitting to the Chrome Web Store.
-8. Optionally use GitHub **Pin repositories** on your profile to showcase DomainDock.
+8. Open a pull request from the feature branch into `main`, review the diff and CI checks, and merge when you're satisfied with the manual Chrome tests.
+9. After merging, optionally tag a release as v0.2.0. The Chrome Web Store package should contain runtime files only, with `manifest.json` at the ZIP root.
 
-### Important distinction
-
-- The **GitHub source ZIP** contains tests, the README, CI, and development documentation.
-- The **Chrome install ZIP** contains only runtime extension files. Extract it before selecting **Load unpacked** in Chrome. Chrome Web Store uploads may use the ZIP directly once runtime acceptance testing and listing preparation are complete.
+**Safety:** Chrome tab closure requires explicit selection and confirmation. This feature does not automatically remove tabs and does not request new permissions.
