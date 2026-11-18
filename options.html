@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DomainDock — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main>
+  <header><div class="eyebrow">DOMAINDOCK / PREFERENCES</div><h1>Make tabs work your way.</h1><p>Give websites short group names and keep related sites together—even across country-specific domains.</p></header>
+  <section class="panel">
+    <div class="section-top"><div><h2>Grouping rules</h2><p>Example: amazon.com and amazon.co.uk → <strong>AMZ</strong></p></div><button id="reset" class="subtle">Restore defaults</button></div>
+    <div id="rules" aria-live="polite"></div>
+    <form id="addRule">
+      <h3>Add a rule</h3>
+      <div class="grid">
+        <label>Group label <input id="ruleName" maxlength="26" required placeholder="e.g. SHOP"></label>
+        <label>Color <select id="ruleColor"><option>blue</option><option>orange</option><option>purple</option><option>green</option><option>red</option><option>cyan</option><option>yellow</option><option>pink</option><option>grey</option></select></label>
+      </div>
+      <label>Domains (comma-separated) <input id="ruleDomains" required placeholder="example.com, example.co.uk"></label>
+      <div class="actions"><span id="message" role="status"></span><button class="primary" type="submit">Add group rule</button></div>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>How labeling works</h2>
+    <p>Open DomainDock, select <strong>+ Label</strong> beside a tab, and save a memorable label, tags, or note. Find it later by typing any word or <code>#shopping</code>.</p>
+    <p>Page labels are saved against page URLs (Amazon product links are normalized to their product ID). They remain available when that page is reopened. They do not rename Chrome's actual tabs or inspect webpage content.</p>
+    <button class="subtle danger" id="clearLabels" type="button">Delete all saved labels and tags</button>
+  </section>
+  <section class="panel small"><h2>Privacy</h2><p>Everything stays in Chrome's local extension storage. No analytics, external requests, cloud sync, or page-content access. This extension requires the <code>tabs</code> permission to search tab titles and URLs, plus <code>tabGroups</code> and <code>storage</code> for grouping and labels.</p></section>
+</main>
+<script type="module" src="options.js"></script>
+</body></html>

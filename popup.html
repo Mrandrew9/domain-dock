@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DomainDock — Tab Finder</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="branding"><div class="logo" aria-hidden="true">D</div>
+        <div><h1>DomainDock</h1><p>Tab space, reclaimed.</p></div>
+      </div>
+      <button id="settings" class="icon-button" type="button" title="Settings" aria-label="Open settings">⚙</button>
+    </header>
+
+    <section class="stats" aria-live="polite">
+      <div><strong id="tabCount">—</strong><span>open tabs</span></div>
+      <div><strong id="siteCount">—</strong><span>websites</span></div>
+      <div><strong id="taggedCount">—</strong><span>labeled tabs</span></div>
+    </section>
+
+    <section class="search-area">
+      <label for="search" class="sr-only">Search tabs, labels, or tags</label>
+      <div class="search-input"><span aria-hidden="true">⌕</span><input id="search" autofocus autocomplete="off" placeholder="Search tabs, labels, #tags…"><kbd>/</kbd></div>
+      <div class="filters">
+        <label class="check"><input id="allWindows" type="checkbox" checked> All windows</label>
+        <label class="check"><input id="autoGroup" type="checkbox"> Auto-group</label>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div><h2 id="resultsTitle">Your tabs</h2><small id="status" role="status"></small></div>
+      <button id="groupNow" class="primary" type="button">Group now</button>
+    </div>
+
+    <section id="results" class="results" aria-label="Matching tabs" aria-live="polite"></section>
+    <footer>Labels and tags stay on this device. <span id="footerNote">No accounts. No tracking.</span></footer>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
