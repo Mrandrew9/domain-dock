@@ -11,6 +11,8 @@ let draftTabId = null;
 let view = 'all';
 let selectedDuplicateIds = new Set();
 let visibleDuplicateGroups = [];
+let keyboardTabId = null;
+let windowNames = new Map();
 
 function element(tag, className, content) {
   const item = document.createElement(tag);
@@ -32,6 +34,10 @@ async function refresh() {
     annotations = settings.annotations || {};
     rules = settings.rules;
     activeWindowId = current.id;
+    const otherWindows = [...new Set(allTabs.map((tab) => tab.windowId))]
+      .filter((id) => id !== activeWindowId).sort((a, b) => a - b);
+    windowNames = new Map(otherWindows.map((id, index) => [id, `Other window ${index + 1}`]));
+    windowNames.set(activeWindowId, 'This window');
     $('autoGroup').checked = settings.autoGroup !== false;
     render();
   } catch (error) {
@@ -77,8 +83,8 @@ function makeEditor(tab, key, card) {
 
 async function openTab(tab) {
   try {
-    await chrome.windows.update(tab.windowId, { focused: true });
-    await chrome.tabs.update(tab.id, { active: true });
+    const activated = await chrome.tabs.update(tab.id, { active: true });
+    await chrome.windows.update(activated.windowId, { focused: true });
     window.close();
   } catch (error) {
     $('status').textContent = `Could not focus tab: ${error.message}`;
@@ -94,9 +100,11 @@ function makeTab(tab) {
   const dot = element('span', 'site-dot', (getCategory(tab.url, rules)?.title || '?').charAt(0).toUpperCase());
   const action = element('button', 'tab-open');
   action.type = 'button'; action.title = 'Switch to tab';
+  action.dataset.switchTab = tab.id;
   const title = element('span', 'tab-title', annotation.label || tab.title || 'Untitled page');
   const hostname = getCategory(tab.url, rules)?.domain || tab.url;
-  const subtitle = element('span', 'tab-caption', annotation.label ? `${tab.title || 'Untitled'} · ${hostname}` : hostname);
+  const page = annotation.label ? `${tab.title || 'Untitled'} · ${hostname}` : hostname;
+  const subtitle = element('span', 'tab-caption', `${page} · ${windowNames.get(tab.windowId)}`);
   action.append(title, subtitle);
   action.addEventListener('click', () => openTab(tab));
   const edit = element('button', 'tag-button', annotation.label || annotation.tags?.length ? '✎ Edit' : '+ Label');
@@ -126,7 +134,8 @@ function renderDuplicateItem(tab, group) {
   check.className = 'duplicate-check'; check.type = 'checkbox';
   check.disabled = !closable;
   check.checked = closable && selectedDuplicateIds.has(tab.id);
-  check.setAttribute('aria-label', `Select duplicate tab: ${tab.title || tab.url}`);
+  const location = `${windowNames.get(tab.windowId)}, tab ${tab.index + 1}`;
+  check.setAttribute('aria-label', `Select duplicate in ${location}: ${tab.title || tab.url}`);
   check.addEventListener('change', () => {
     if (check.checked) selectedDuplicateIds.add(tab.id);
     else selectedDuplicateIds.delete(tab.id);
@@ -135,15 +144,22 @@ function renderDuplicateItem(tab, group) {
   const content = element('div', 'duplicate-item-main');
   content.append(
     element('span', 'tab-title', annotationFor(tab).label || tab.title || 'Untitled page'),
-    element('span', 'tab-caption', `Window ${tab.windowId} · ${new URL(tab.url).hostname}`),
+    element('span', 'tab-caption', `Tab ${tab.index + 1}`),
   );
-  const flag = isKeeper ? 'Keep' : closable ? '' :
-    tab.active ? 'Active' : tab.pinned ? 'Pinned' : tab.audible ? 'Playing' :
-    tab.highlighted ? 'Selected' : 'Protected';
+  const flags = [];
+  if (isKeeper) flags.push('Keep');
+  if (tab.active) flags.push('Active');
+  if (tab.pinned) flags.push('Pinned');
+  if (tab.audible) flags.push('Playing audio');
+  if (tab.highlighted && !tab.active) flags.push('Highlighted');
+  if (!closable && !flags.length) flags.push('Protected');
   const open = element('button', 'duplicate-focus', 'Go to');
-  open.type = 'button'; open.addEventListener('click', () => openTab(tab));
+  open.type = 'button';
+  open.dataset.switchTab = tab.id;
+  open.setAttribute('aria-label', `Switch to ${location}: ${tab.title || tab.url}`);
+  open.addEventListener('click', () => openTab(tab));
   row.append(check, content);
-  if (flag) row.append(element('span', 'duplicate-state', flag));
+  if (flags.length) row.append(element('span', 'duplicate-state', flags.join(' · ')));
   row.append(open);
   return row;
 }
@@ -176,7 +192,19 @@ function renderDuplicates(scoped) {
     const site = getCategory(first.url, rules)?.title || new URL(group.key).hostname;
     const groupTitle = element('div', 'duplicate-group-header', `${site} · ${group.tabs.length} copies`);
     box.append(groupTitle);
-    for (const tab of group.tabs) box.append(renderDuplicateItem(tab, group));
+    const windows = new Map();
+    for (const tab of group.tabs) {
+      if (!windows.has(tab.windowId)) windows.set(tab.windowId, []);
+      windows.get(tab.windowId).push(tab);
+    }
+    const windowIds = [...windows.keys()].sort((a, b) =>
+      Number(b === activeWindowId) - Number(a === activeWindowId) || a - b);
+    for (const id of windowIds) {
+      box.append(element('h3', 'duplicate-window', windowNames.get(id)));
+      for (const tab of windows.get(id).sort((a, b) => a.index - b.index)) {
+        box.append(renderDuplicateItem(tab, group));
+      }
+    }
     results.append(box);
   }
 }
@@ -197,7 +225,11 @@ function render() {
   $('showDuplicates').setAttribute('aria-pressed', String(view === 'duplicates'));
   $('duplicateActions').hidden = view !== 'duplicates';
   $('groupNow').hidden = view === 'duplicates';
-  if (view === 'duplicates') { renderDuplicates(scoped); return; }
+  if (view === 'duplicates') {
+    renderDuplicates(scoped);
+    updateKeyboardSelection();
+    return;
+  }
 
   const query = $('search').value;
   const filtered = scoped.filter((tab) => matchesTab(tab, annotationFor(tab), query));
@@ -206,7 +238,9 @@ function render() {
   if (!filtered.length) {
     const empty = element('div', 'empty');
     empty.append(element('strong', '', 'No matching tabs'), element('span', '', 'Try a site name, product title, saved label, or #tag.'));
-    container.append(empty); return;
+    container.append(empty);
+    updateKeyboardSelection();
+    return;
   }
   const buckets = new Map();
   for (const tab of filtered) {
@@ -221,12 +255,46 @@ function render() {
     container.append(heading);
     for (const tab of bucket.tabs) container.append(makeTab(tab));
   }
+  updateKeyboardSelection();
 }
 
-$('search').addEventListener('input', () => { editingKey = null; draftTabId = null; selectedDuplicateIds.clear(); render(); });
+function updateKeyboardSelection() {
+  const previous = $('results').querySelector('.keyboard-selected');
+  previous?.classList.remove('keyboard-selected');
+  const selected = keyboardTabId === null ? null :
+    $('results').querySelector(`[data-switch-tab="${keyboardTabId}"]`);
+  keyboardTabId = selected?.dataset.switchTab ?? null;
+  selected?.closest('.tab-card, .duplicate-item').classList.add('keyboard-selected');
+  if (!selected) $('keyboardStatus').textContent = '';
+  return selected;
+}
+
+$('search').addEventListener('keydown', (event) => {
+  if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+  const buttons = [...$('results').querySelectorAll('[data-switch-tab]')];
+  if (!buttons.length) return;
+  const index = buttons.findIndex((button) => button.dataset.switchTab === keyboardTabId);
+  if (event.key === 'Enter') {
+    if (index < 0 && !$('search').value.trim()) return;
+    event.preventDefault();
+    if (!event.repeat) buttons[Math.max(index, 0)].click();
+    return;
+  }
+
+  event.preventDefault();
+  const next = event.key === 'ArrowDown' ? Math.min(index + 1, buttons.length - 1) :
+    index < 0 ? buttons.length - 1 : Math.max(index - 1, 0);
+  keyboardTabId = buttons[next].dataset.switchTab;
+  const selected = updateKeyboardSelection();
+  selected.closest('.tab-card, .duplicate-item').scrollIntoView({ block: 'nearest' });
+  $('keyboardStatus').textContent = `${next + 1} of ${buttons.length}. ${selected.getAttribute('aria-label') || selected.innerText}`;
+});
+
+$('search').addEventListener('input', () => { keyboardTabId = null; editingKey = null; draftTabId = null; selectedDuplicateIds.clear(); render(); });
 $('allWindows').addEventListener('change', () => { selectedDuplicateIds.clear(); render(); });
-$('showAll').addEventListener('click', () => { view = 'all'; selectedDuplicateIds.clear(); render(); });
-$('showDuplicates').addEventListener('click', () => { view = 'duplicates'; selectedDuplicateIds.clear(); render(); });
+$('showAll').addEventListener('click', () => { keyboardTabId = null; view = 'all'; selectedDuplicateIds.clear(); render(); });
+$('showDuplicates').addEventListener('click', () => { keyboardTabId = null; view = 'duplicates'; selectedDuplicateIds.clear(); render(); });
 $('selectExtras').addEventListener('click', () => {
   selectedDuplicateIds = new Set(suggestedDuplicateIds(visibleDuplicateGroups));
   render();
