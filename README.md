@@ -28,6 +28,10 @@ Reduce tab clutter without losing your place. DomainDock groups tabs from the sa
 
 No account, build step, npm install, or API key is required.
 
+## Find tabs with the keyboard
+
+Open DomainDock with **Ctrl+Shift+K** (**Command+Shift+K** on macOS) and type to search. Use **↑** and **↓** to highlight a result, then press **Enter** to switch to it, including across windows. With a search term entered, **Enter** opens the first result if you haven't highlighted one. You can change the shortcut at `chrome://extensions/shortcuts`.
+
 ## How to use labels and tags
 
 1. Open an Amazon product tab.
@@ -38,10 +42,10 @@ No account, build step, npm install, or API key is required.
 
 The label appears in **DomainDock's finder**, not Chrome's native tab title. The URL-based label survives closing and reopening the same page. Amazon links with recognized ASIN-style paths survive common referral/tracking URL changes.
 
-## Review duplicate tabs (v0.2)
+## Review duplicate tabs
 
 1. Open the DomainDock popup and choose **Duplicates**. A counter shows how many extra exact-URL copies are open.
-2. Review each set. **Keep** marks the preferred surviving tab; protected tabs (active, pinned, playing audio, highlighted) cannot be selected for closure.
+2. Review each set by window and tab position. Use **Go to** to inspect a copy. **Keep** marks the preferred surviving tab; protected tabs (active, pinned, playing audio, highlighted) cannot be selected for closure.
 3. Check the boxes beside tabs you want to close, or choose **Select same-window extras** to select only safe extras **while keeping one copy in each window**.
 4. Click **Close selected**. Chrome will display a confirmation dialog describing the risk of unsaved page data.
 5. After confirmation, DomainDock checks the current Chrome tab URLs, windows, and protection flags again. If anything material changed, the action is blocked and you can rescan.
@@ -111,7 +115,7 @@ PRIVACY.md            Data-handling policy
 - [ ] Full Public Suffix List-based domain matching (for unusual ccTLDs)
 - [ ] Import/export labels as JSON with explicit user action
 - [ ] Batch tagging and grouping exclusions
-- [ ] Keyboard navigation through search results
+- [x] Keyboard navigation through search results
 - [x] Manual exact-URL duplicate review (never silently close tabs)
 - [ ] Optional review-only suggestions for related links (such as Amazon product URLs with different tracking parameters)
 - [ ] Integration tests using Chrome extension automation
