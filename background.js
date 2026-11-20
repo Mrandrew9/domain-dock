@@ -23,7 +23,7 @@ async function processWindow(windowId, rules) {
 
 function enqueueWindow(windowId, rules) {
   const prev = jobs.get(windowId) || Promise.resolve();
-  const task = prev.catch(() => {}).then(() => processWindow(windowId, rules));
+  const task = prev.catch(() => {}).then(() => navigator.locks.request('domain-dock-focus', () => processWindow(windowId, rules)));
   jobs.set(windowId, task);
   task.finally(() => { if (jobs.get(windowId) === task) jobs.delete(windowId); }).catch(() => {});
   return task;

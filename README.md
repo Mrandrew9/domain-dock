@@ -32,6 +32,12 @@ No account, build step, npm install, or API key is required.
 
 Open DomainDock with **Ctrl+Shift+K** (**Command+Shift+K** on macOS) and type to search. Use **↑** and **↓** to highlight a result, then press **Enter** to switch to it, including across windows. With a search term entered, **Enter** opens the first result if you haven't highlighted one. You can change the shortcut at `chrome://extensions/shortcuts`.
 
+## Review search results and focus
+
+Search in the finder and choose **Review & focus**. Review the matches, edit the group name and select **Group selected here** or **Start focus session**. Focus moves your selection to a dedicated window. Its DomainDock tab lets you return the session tabs or keep the window. Newly opened tabs stay where you put them. If an original window closed, DomainDock creates a replacement when returning tabs. Return tracking lasts for the current browser session.
+
+Enable **Include incident checklist** to look for required pages. Save a hostname to match the incident ID against tab titles and URLs, or save a complete web address for a fixed page. Multiple candidates are available for manual selection.
+
 ## How to use labels and tags
 
 1. Open an Amazon product tab.

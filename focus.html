@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Focus · DomainDock</title><link rel="stylesheet" href="focus.css"></head>
+<body><main><header>DomainDock</header><h1>Review &amp; focus</h1>
+<section id="session" hidden><h2 id="sessionName"></h2><button id="restore">Return session tabs</button> <button id="keep">End and keep window</button></section>
+<label>Topic or incident ID <input id="query" type="search" autofocus placeholder="e.g. INC-4821"></label>
+<label><input id="incident" type="checkbox"> Include incident checklist</label>
+<details><summary>Edit incident checklist</summary>
+<p>One item per line. Enter a name, a vertical bar, then an exact web address or a hostname. Hostnames also require the topic in the tab title or URL. Exact addresses are saved on this device.</p>
+<textarea id="rules" aria-label="Incident checklist" placeholder="Incident notes | docs.google.com&#10;Vendor status | https://status.example.com/"></textarea><button id="save">Save checklist</button></details>
+<h2 id="count">Matching tabs</h2><div id="missing"></div><div id="results"></div>
+<section><label>Group name <input id="name" maxlength="80"></label><p id="preview"></p>
+<button id="group">Group selected here</button> <button id="focus">Start focus session</button></section>
+<p role="status" id="status"></p></main><script type="module" src="focus.js"></script></body></html>

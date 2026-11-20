@@ -1,6 +1,6 @@
 {
   "name": "domain-dock",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "Local-first domain-based Chrome tab grouping and tagged tab finder",
