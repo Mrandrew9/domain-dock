@@ -347,3 +347,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && (changes.annotations || changes.rules)) refresh();
 });
 refresh();
+
+$('topic').addEventListener('click', () => {
+  const url = new URL(chrome.runtime.getURL('focus.html'));
+  url.hash = new URLSearchParams({ q: $('search').value });
+  chrome.tabs.create({ url: url.href });
+});

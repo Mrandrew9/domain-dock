@@ -11,3 +11,5 @@ Duplicate detection inspects currently open HTTP(S) tab URLs in memory. It does 
 Delete labels in Settings with **Delete all saved labels and tags**. Uninstalling the extension removes its local extension storage. Grouping changes affect Chrome's current tab organization and are not undone by deleting annotations.
 
 Data isn't synced between browsers or devices. No account is required.
+
+Incident checklist names and user-entered addresses are stored locally. Focus restoration uses temporary browser-session storage for tab and window identifiers, positions, pinned state and original group details.

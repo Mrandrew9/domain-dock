@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "DomainDock — Tab Groups & Finder",
   "short_name": "DomainDock",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Group tabs by website, detect exact duplicate tabs, search pages, and save labels and tags. Local-only.",
   "minimum_chrome_version": "116",
   "permissions": ["tabs", "tabGroups", "storage"],
