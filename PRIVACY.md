@@ -12,4 +12,4 @@ Delete labels in Settings with **Delete all saved labels and tags**. Uninstallin
 
 Data isn't synced between browsers or devices. No account is required.
 
-Incident checklist names and user-entered addresses are stored locally. Focus restoration uses temporary browser-session storage for tab and window identifiers, positions, pinned state and original group details.
+Incident checklist names and user-entered addresses are stored locally. Focus restoration uses temporary browser-session storage for tab and window identifiers, positions, pinned state and original group details. When you take a tab out of a group, DomainDock remembers that tab's identifier and site in the same session-only storage so it doesn't regroup it; this is cleared when the tab closes, when you click **Group now**, or when the browser session ends.
