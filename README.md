@@ -4,6 +4,12 @@
 
 Reduce tab clutter without losing your place. DomainDock groups tabs from the same website into **native Chrome tab groups**, then helps you find specific pages by searching **tab titles, URLs, saved labels, notes, and tags**. The **Duplicates** view lets you review repeated page URLs before choosing what to close, and **Review & focus** gathers every tab about one topic or incident into a single group or focus window, then puts them back.
 
+| Finder | Duplicates | Review & focus |
+|---|---|---|
+| ![DomainDock finder listing tabs grouped by site, with a search box and a labelled Amazon tab](docs/screenshots/finder.png) | ![Duplicates view showing an exact duplicate with the copy to keep and the extra selected for review](docs/screenshots/duplicates.png) | ![Review & focus page gathering INC-4821 tabs from two windows with the incident checklist](docs/screenshots/review-focus.png) |
+
+<sub>Screenshots use demo pages served locally; no real accounts or data.</sub>
+
 ## Features
 
 - **Auto-group open tabs:** two or more ungrouped tabs from the same website become a native Chrome group (per browser window).

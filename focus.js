@@ -38,6 +38,8 @@ async function refresh() {
   rows = tabs.map(tab => ({ tab, reasons: topicReasons(tab, local.annotations?.[canonicalPageKey(tab.url)] || {}, query, rules) })).filter(row => row.reasons.length);
   selected.clear();
   $('results').replaceChildren();
+  const others = [...new Set(tabs.map(t => t.windowId))].filter(id => id !== current.id).sort((a, b) => a - b);
+  const windowName = id => id === current.id ? 'This window' : 'Other window ' + (others.indexOf(id) + 1);
   for (const {tab, reasons} of rows) {
     const label = node('label','');
     label.className = 'result';
@@ -48,7 +50,7 @@ async function refresh() {
     check.checked = known.has(tab.id) ? previous.has(tab.id) : !ambiguous && !tab.pinned && tab.groupId === -1;
     if (check.checked) selected.set(tab.id, tab);
     check.onchange = () => { if (check.checked) selected.set(tab.id,tab); else selected.delete(tab.id); preview(); };
-    label.append(check, ' ' + (tab.title || tab.url), node('small', [new URL(tab.url).hostname, tab.windowId === current.id ? 'This window' : 'Window ' + tab.windowId, ...reasons, tab.pinned && 'Pinned · grouping unpins', tab.groupId !== -1 && 'Already grouped'].filter(Boolean).join(' · ')));
+    label.append(check, ' ' + (tab.title || tab.url), node('small', [new URL(tab.url).hostname, windowName(tab.windowId), ...reasons, tab.pinned && 'Pinned · grouping unpins', tab.groupId !== -1 && 'Already grouped'].filter(Boolean).join(' · ')));
     $('results').append(label);
   }
   $('missing').replaceChildren();
