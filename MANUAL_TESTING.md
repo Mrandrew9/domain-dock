@@ -58,3 +58,21 @@ The project has offline Node.js tests, including mocked Chrome tab-group and dup
 3. Press Enter on a result in the other window. Verify Chrome focuses that window and activates the chosen tab.
 4. Open the same exact page URL in both windows. Open **Duplicates** and verify the current window appears first, copies are ordered by their tab position in each window, and **Go to** switches to the chosen copy. Verify protection badges still appear on a protected keeper.
 5. Search for a term with no matches and press Enter. Verify the popup stays open. Edit a label and verify Enter still submits the editor.
+
+## Tabs removed from a group (v0.4.1)
+
+1. Open three `github.com` tabs in one window so DomainDock groups them.
+2. Drag one tab out of the group. Reload any tab in the window. The dragged tab stays ungrouped.
+3. In the dragged tab, navigate to another site with at least one other tab open, then back. It can be grouped again by site rules.
+4. Drag a tab out again, then click **Group now** in the popup. The tab rejoins the group.
+5. Right-click a DomainDock group and choose **Ungroup**. The tabs stay ungrouped after reloading.
+
+## Review & focus
+
+1. Open tabs mentioning the same term (for example `INC-4821`) in two windows, one of them pinned and one in a named group.
+2. In the popup, search the term and choose **Review & focus**. Matches from both windows are listed; pinned and already-grouped tabs are unchecked by default.
+3. Select tabs and click **Start focus session**. A new window opens with the selection in a purple group named after the topic.
+4. Click **Return session tabs**. Each tab returns to its original window and position, and the grouped tab rejoins a group with its original title and color. A pinned tab is pinned again.
+5. Start a session, close one of the original windows, then return the tabs. A replacement window is created for that window's tabs.
+6. Change a selected tab's URL before starting. The action is refused with "A selected tab changed".
+7. Enable **Include incident checklist**, save `Vendor status | https://status.example.com/`, and confirm it shows **Missing** with an **Open page** button when that page isn't open.
