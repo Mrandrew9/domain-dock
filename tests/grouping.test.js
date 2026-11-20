@@ -74,3 +74,38 @@ test('singletons do not generate noisy one-tab groups', async () => {
   const result = await reconcileWindow(api,1,undefined,{});
   assert.equal(result.groupsCreated,0);
 });
+
+test('does not pull a tab the user removed back into its group', async () => {
+  const {api,state} = fakeBrowser([
+    tab(1,'https://github.com/a'), tab(2,'https://github.com/b'), tab(3,'https://github.com/c'),
+  ]);
+  const first = await reconcileWindow(api,1,[],{});
+  const groupId = state.tabs[0].groupId;
+  assert.equal(state.tabs.every(t => t.groupId === groupId), true);
+  // The user drags tab 3 out of the group.
+  state.tabs[2].groupId = -1;
+  const released = { 3: 'site:github.com' };
+  const second = await reconcileWindow(api,1,[],first.managed,released);
+  assert.equal(state.tabs[2].groupId, -1);
+  assert.equal(second.tabsAdded, 0);
+  // Without the release record (e.g. after "Group now"), the tab is grouped again.
+  await reconcileWindow(api,1,[],second.managed,{});
+  assert.equal(state.tabs[2].groupId, groupId);
+});
+
+test('a released tab becomes eligible again after navigating to another site', async () => {
+  const {api,state} = fakeBrowser([
+    tab(1,'https://example.com/a'), tab(2,'https://example.com/b'),
+  ]);
+  // Tab 1 was released while it showed github.com; it now shows example.com.
+  const result = await reconcileWindow(api,1,[],{},{ 1: 'site:github.com' });
+  assert.equal(result.groupsCreated, 1);
+  assert.equal(state.tabs[0].groupId, state.tabs[1].groupId);
+});
+
+test('two released tabs of the same site do not form a new group', async () => {
+  const {api,state} = fakeBrowser([tab(1,'https://github.com/a'), tab(2,'https://github.com/b')]);
+  const result = await reconcileWindow(api,1,[],{},{ 1: 'site:github.com', 2: 'site:github.com' });
+  assert.equal(result.groupsCreated, 0);
+  assert.equal(state.tabs.every(t => t.groupId === -1), true);
+});
