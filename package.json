@@ -6,7 +6,9 @@
   "description": "Local-first domain-based Chrome tab grouping and tagged tab finder",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node --check background.js && node --check popup.js && node --check options.js && node --check lib/core.js && node --check lib/group-engine.js && node --check lib/duplicates.js && node --test tests/*.test.js"
+    "check": "node scripts/check-syntax.mjs && node --test tests/*.test.js"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
