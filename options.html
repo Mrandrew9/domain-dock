@@ -21,13 +21,42 @@
       <div class="actions"><span id="message" role="status"></span><button class="primary" type="submit">Add group rule</button></div>
     </form>
   </section>
+  <section class="panel" aria-labelledby="exclusionsTitle">
+    <h2 id="exclusionsTitle">Never auto-group</h2>
+    <p>Tabs on these sites stay ungrouped. Subdomains are included: <code>google.com</code> covers Gmail and Docs, while <code>mail.google.com</code> covers only Gmail. Groups that already exist are not changed.</p>
+    <div id="exclusions" aria-live="polite"></div>
+    <form id="addExclusion">
+      <label>Website <input id="exclusionDomain" required placeholder="mail.google.com" autocomplete="off"></label>
+      <div class="actions"><span id="exclusionMessage" role="status"></span><button class="primary" type="submit">Add site</button></div>
+    </form>
+  </section>
+  <section class="panel" aria-labelledby="backupTitle">
+    <h2 id="backupTitle">Backup</h2>
+    <p>Your labels, tags, notes, rules, excluded sites and incident checklist live only in this browser, and Chrome deletes them if you remove DomainDock. Export a backup to keep them or move them to another computer.</p>
+    <p class="note">The backup is a plain JSON file that lists the web addresses you labelled. Keep it somewhere private.</p>
+    <div class="button-row">
+      <button id="exportData" class="primary" type="button">Export backup</button>
+      <button id="importData" class="subtle" type="button">Import backup…</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <div id="importPreview" class="import-preview" hidden>
+      <p id="importSummary"></p>
+      <fieldset>
+        <legend>How should this backup be applied?</legend>
+        <label class="choice"><input type="radio" name="importMode" value="merge" checked> <span><strong>Merge</strong>: add the file's labels, rules and excluded sites to what you have now</span></label>
+        <label class="choice"><input type="radio" name="importMode" value="replace"> <span><strong>Replace</strong>: use the file's data instead of your current labels and settings</span></label>
+      </fieldset>
+      <div class="button-row"><button id="applyImport" class="primary" type="button">Apply backup</button><button id="cancelImport" class="subtle" type="button">Cancel</button></div>
+    </div>
+    <p id="backupMessage" role="status"></p>
+  </section>
   <section class="panel">
     <h2>How labeling works</h2>
     <p>Open DomainDock, select <strong>+ Label</strong> beside a tab, and save a memorable label, tags, or note. Find it later by typing any word or <code>#shopping</code>.</p>
     <p>Page labels are saved against page URLs (Amazon product links are normalized to their product ID). They remain available when that page is reopened. They do not rename Chrome's actual tabs or inspect webpage content.</p>
     <button class="subtle danger" id="clearLabels" type="button">Delete all saved labels and tags</button>
   </section>
-  <section class="panel small"><h2>Privacy</h2><p>Everything stays in Chrome's local extension storage. No analytics, external requests, cloud sync, or page-content access. This extension requires the <code>tabs</code> permission to search tab titles and URLs, plus <code>tabGroups</code> and <code>storage</code> for grouping and labels.</p></section>
+  <section class="panel small"><h2>Privacy</h2><p>Everything stays in Chrome's local extension storage. No analytics, external requests, cloud sync, or page-content access. A backup file is created only when you click <strong>Export backup</strong>. This extension requires the <code>tabs</code> permission to search tab titles and URLs, plus <code>tabGroups</code> and <code>storage</code> for grouping and labels.</p></section>
 </main>
 <script type="module" src="options.js"></script>
 </body></html>

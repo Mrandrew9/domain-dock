@@ -31,3 +31,12 @@ input,select { width: 100%; padding: 10px; border: 1px solid #475474; border-rad
 #message { font-size: 12px; color: #a6e0c6; }
 code { color: #c6bfff; }
 @media(max-width:550px) { .grid { grid-template-columns: 1fr; } .section-top { flex-direction: column; } }
+
+.note { color: #a6b3d0; font-size: 12.5px; }
+.button-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.import-preview { margin-top: 16px; padding: 14px; border: 1px solid #465270; border-radius: 12px; background: #141a2c; }
+.import-preview fieldset { border: 0; padding: 0; margin: 8px 0 0; }
+.import-preview legend { font-weight: 700; margin-bottom: 6px; }
+.choice { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; font-size: 13px; }
+.choice input { width: auto; margin-top: 3px; }
+#backupMessage { min-height: 1em; }
