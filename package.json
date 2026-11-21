@@ -6,9 +6,13 @@
   "description": "Local-first domain-based Chrome tab grouping and tagged tab finder",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node scripts/check-syntax.mjs && node --test tests/*.test.js"
+    "check": "node scripts/check-syntax.mjs && node --test tests/*.test.js",
+    "test:browser": "node --test --test-concurrency=1 tests/browser/*.browser.mjs"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }
