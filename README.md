@@ -22,6 +22,8 @@ Reduce tab clutter without losing your place. DomainDock groups tabs from the sa
 - **Persistent page labels:** labels are keyed by page URL rather than Chrome's temporary tab ID; recognized Amazon product links are normalized to `/dp/ASIN` on the marketplace root domain.
 - **Privacy-first:** no server, tracking, analytics, remote scripts, content injection, or third-party libraries.
 - **Respect your choices:** tabs in user-created groups aren't moved, and a tab you drag out of a DomainDock group stays out until it navigates to another site (or you click **Group now**). Pinned tabs and incognito windows are excluded.
+- **Never auto-group chosen sites:** list sites in Settings, or click **Don't auto-group** on a site in the popup. Subdomains are included, so `mail.google.com` keeps only Gmail ungrouped. Existing groups are never changed.
+- **Back up your labels and settings:** export labels, notes, tags, rules, excluded sites and the incident checklist to a JSON file, and import them later or on another computer (merge or replace).
 - **Quick access:** extension toolbar icon or suggested shortcut `Ctrl+Shift+K` (`Command+Shift+K` on Mac), configurable at `chrome://extensions/shortcuts`.
 
 ## Install locally (developer mode)
@@ -87,7 +89,7 @@ Rules have priority over ordinary website grouping. Use **Group now** to organiz
 
 No `host_permissions`, `<all_urls>`, or content scripts are requested. See [PRIVACY.md](PRIVACY.md).
 
-## Limitations (v0.4)
+## Limitations (v0.5)
 
 - **Closing tabs can lose unsaved form data.** DomainDock never automatically closes tabs, but manual closure can still discard unsaved edits or session state. There is no built-in undo mechanism.
 - **Page content is not indexed.** Search covers a tab's title, URL, your label, tags, and notes. To find a product not named in its tab title, add a label or note.
@@ -97,10 +99,10 @@ No `host_permissions`, `<all_urls>`, or content scripts are requested. See [PRIV
 - Domain detection uses an **offline heuristic** for registrable domains (including common compound suffixes like `co.uk`), not the entire Public Suffix List. Add rules for exceptions.
 - Existing manually grouped tabs are left alone. A manually named group with an exact matching title and matching site members can be adopted after browser restart.
 - Labels are stored **per URL**, not per tab instance. Two tabs with the exact same canonical URL share the same label. Changing URLs may require relabeling.
-- Data is stored in `chrome.storage.local`, not synced across machines. Labels remain until individually cleared or the extension is uninstalled.
+- Data is stored in `chrome.storage.local`, not synced across machines, and Chrome deletes it when the extension is uninstalled. Use **Export backup** in Settings to keep a copy or move it to another computer. The backup is a plain JSON file listing the URLs you labelled; keep it private.
 - The extension uses the same extension-managed group where it can identify one. It does not merge or destroy manually created groups.
 - Automatic grouping starts enabled and groups two or more eligible tabs on installation.
-- Testing so far is automated (Node.js with mocked Chrome APIs). Run the [manual checklist](MANUAL_TESTING.md) in Chrome before publishing a release.
+- Automated tests run with mocked Chrome APIs and in a real Chromium with the extension loaded. The [manual checklist](MANUAL_TESTING.md) covers what automation can't, such as the toolbar popup and Chrome's tab strip.
 
 ## Development
 
@@ -109,6 +111,10 @@ Run the offline, dependency-free unit tests:
 ```bash
 npm test         # unit tests
 npm run check    # syntax-check every script, then run the tests (used by CI)
+
+npm install                          # once: installs Playwright (development only)
+npx playwright install chromium      # once: a Chromium that can load unpacked extensions
+npm run test:browser                 # load DomainDock in Chromium and test it end to end (used by CI)
 ```
 
 Project structure:
@@ -121,11 +127,13 @@ lib/group-engine.js   Per-window grouping and manual-group protection
 lib/duplicates.js     Exact-URL duplicate detection and checked manual closure
 lib/topic.js          Topic matching and incident checklist parsing
 lib/focus-session.js  Reversible focus sessions (move tabs out and back)
+lib/backup.js         Backup file format, validation, merge and replace
 popup.*               Finder, tag editor, auto-group toggle
 focus.*               Review & focus page
 options.*             Custom domain aliases and preferences
 scripts/              Development checks
 tests/                Node.js tests with mocked Chrome APIs
+tests/browser/        End-to-end tests in Chromium (Playwright, dev only)
 icons/                Toolbar/store-ready artwork
 PRIVACY.md            Data-handling policy
 MANUAL_TESTING.md     In-browser acceptance checklist
@@ -135,13 +143,14 @@ RELEASING.md          Release and Chrome Web Store checklist
 ## Roadmap
 
 - [ ] Full Public Suffix List-based domain matching (for unusual ccTLDs)
-- [ ] Import/export labels as JSON with explicit user action
-- [ ] Batch tagging and grouping exclusions
+- [x] Import/export labels and settings as JSON with explicit user action
+- [x] Grouping exclusions (never auto-group chosen sites)
+- [ ] Batch tagging
 - [x] Keyboard navigation through search results
 - [x] Manual exact-URL duplicate review (never silently close tabs)
 - [x] Review & focus: topic/incident grouping with reversible focus sessions
 - [ ] Optional review-only suggestions for related links (such as Amazon product URLs with different tracking parameters)
-- [ ] Integration tests using Chrome extension automation
+- [x] Integration tests using Chrome extension automation
 
 ## Releasing
 

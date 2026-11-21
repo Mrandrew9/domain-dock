@@ -8,8 +8,10 @@ The extension may temporarily handle URLs containing sensitive search terms or q
 
 Duplicate detection inspects currently open HTTP(S) tab URLs in memory. It does not store duplicate scan results or transmit them. Only after you select specific duplicates and confirm does it call Chrome’s tab-close API; it rechecks the tab state first. Closing a tab may discard unsaved website data. The extension does not record or upload which tabs you closed.
 
-Delete labels in Settings with **Delete all saved labels and tags**. Uninstalling the extension removes its local extension storage. Grouping changes affect Chrome's current tab organization and are not undone by deleting annotations.
+Delete labels in Settings with **Delete all saved labels and tags**. Uninstalling the extension removes its local extension storage.
+
+**Backups.** A backup file is created only when you click **Export backup** in Settings, and it is saved by Chrome to your downloads like any other file. It contains your labels, notes and tags with the page addresses they belong to, your grouping rules, excluded sites, incident checklist and auto-group setting, in plain JSON. DomainDock does not upload it anywhere; keep it somewhere private. **Import backup** reads only the file you choose, and every value is validated before anything is saved. Grouping changes affect Chrome's current tab organization and are not undone by deleting annotations.
 
 Data isn't synced between browsers or devices. No account is required.
 
-Incident checklist names and user-entered addresses are stored locally. Focus restoration uses temporary browser-session storage for tab and window identifiers, positions, pinned state and original group details. When you take a tab out of a group, DomainDock remembers that tab's identifier and site in the same session-only storage so it doesn't regroup it; this is cleared when the tab closes, when you click **Group now**, or when the browser session ends.
+Sites you choose never to auto-group are stored locally. Incident checklist names and user-entered addresses are stored locally. Focus restoration uses temporary browser-session storage for tab and window identifiers, positions, pinned state and original group details. When you take a tab out of a group, DomainDock remembers that tab's identifier and site in the same session-only storage so it doesn't regroup it; this is cleared when the tab closes, when you click **Group now**, or when the browser session ends.

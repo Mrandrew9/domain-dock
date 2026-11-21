@@ -76,3 +76,18 @@ The project has offline Node.js tests, including mocked Chrome tab-group and dup
 5. Start a session, close one of the original windows, then return the tabs. A replacement window is created for that window's tabs.
 6. Change a selected tab's URL before starting. The action is refused with "A selected tab changed".
 7. Enable **Include incident checklist**, save `Vendor status | https://status.example.com/`, and confirm it shows **Missing** with an **Open page** button when that page isn't open.
+
+## Never auto-group (v0.5.0)
+
+Automated in `npm run test:browser`; check by hand in the real toolbar popup and tab strip.
+
+1. In Settings, add `mail.google.com` under **Never auto-group**. Open two Gmail tabs and two Google Calendar tabs. Calendar is grouped; Gmail is not.
+2. Remove `mail.google.com`. The Gmail tabs are grouped.
+3. In the toolbar popup, click **Don't auto-group** on a grouped site. The button changes to **Not auto-grouped**, the existing group stays, and new tabs on that site stay ungrouped.
+
+## Backup (v0.5.0)
+
+1. Add a label with tags and a note, a custom rule, an excluded site and an incident checklist.
+2. In Settings, click **Export backup**. A `domaindock-backup-YYYY-MM-DD.json` file downloads, and the status line counts what was exported.
+3. Remove DomainDock, load it again unpacked, and import the file with **Replace**. Everything from step 1 is back.
+4. Import a file that isn't a backup. It's refused with a message, and nothing changes.
