@@ -109,3 +109,27 @@ test('two released tabs of the same site do not form a new group', async () => {
   assert.equal(result.groupsCreated, 0);
   assert.equal(state.tabs.every(t => t.groupId === -1), true);
 });
+
+test('excluded sites are never auto-grouped; other sites still are', async () => {
+  const {api,state} = fakeBrowser([
+    tab(1,'https://mail.google.com/a'), tab(2,'https://mail.google.com/b'),
+    tab(3,'https://docs.google.com/1'), tab(4,'https://docs.google.com/2'),
+    tab(5,'https://github.com/a'), tab(6,'https://github.com/b'),
+  ]);
+  const result = await reconcileWindow(api,1,[],{},{},['mail.google.com']);
+  assert.equal(result.groupsCreated, 2);
+  assert.equal(state.tabs[0].groupId, -1);
+  assert.equal(state.tabs[1].groupId, -1);
+  assert.notEqual(state.tabs[2].groupId, -1);
+  assert.equal(state.tabs[2].groupId, state.tabs[3].groupId);
+  assert.equal(state.tabs[4].groupId, state.tabs[5].groupId);
+});
+
+test('excluding a site leaves tabs already in a group where they are', async () => {
+  const {api,state} = fakeBrowser([tab(1,'https://github.com/a'), tab(2,'https://github.com/b')]);
+  const first = await reconcileWindow(api,1,[],{});
+  const groupId = state.tabs[0].groupId;
+  const second = await reconcileWindow(api,1,[],first.managed,{},['github.com']);
+  assert.equal(second.tabsAdded, 0);
+  assert.equal(state.tabs.every(t => t.groupId === groupId), true);
+});

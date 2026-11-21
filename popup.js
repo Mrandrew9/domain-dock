@@ -1,10 +1,11 @@
-import { canonicalPageKey, cleanAnnotation, getCategory, matchesTab, safeLabel } from './lib/core.js';
+import { canonicalPageKey, cleanAnnotation, getCategory, isExcluded, matchesTab, safeLabel, sanitizeExclusions } from './lib/core.js';
 import { closeReviewedDuplicates, findDuplicateGroups, suggestedDuplicateIds } from './lib/duplicates.js';
 
 const $ = (id) => document.getElementById(id);
 let allTabs = [];
 let annotations = {};
 let rules = undefined;
+let excludedSites = [];
 let activeWindowId = null;
 let editingKey = null;
 let draftTabId = null;
@@ -27,12 +28,13 @@ async function refresh() {
   try {
     const [tabs, settings, current] = await Promise.all([
       chrome.tabs.query({}),
-      chrome.storage.local.get(['annotations', 'rules', 'autoGroup']),
+      chrome.storage.local.get(['annotations', 'rules', 'autoGroup', 'excludedSites']),
       chrome.windows.getCurrent(),
     ]);
     allTabs = tabs.filter((tab) => !tab.incognito && tab.url?.startsWith('http'));
     annotations = settings.annotations || {};
     rules = settings.rules;
+    excludedSites = sanitizeExclusions(settings.excludedSites);
     activeWindowId = current.id;
     const otherWindows = [...new Set(allTabs.map((tab) => tab.windowId))]
       .filter((id) => id !== activeWindowId).sort((a, b) => a - b);
@@ -246,16 +248,37 @@ function render() {
   for (const tab of filtered) {
     const cat = getCategory(tab.url, rules);
     const k = cat?.key || 'unclassified';
-    if (!buckets.has(k)) buckets.set(k, { title: safeLabel(cat?.title || 'Other tabs'), tabs: [] });
+    if (!buckets.has(k)) buckets.set(k, { key: k, title: safeLabel(cat?.title || 'Other tabs'), tabs: [] });
     buckets.get(k).tabs.push(tab);
   }
   for (const bucket of [...buckets.values()].sort((a, b) => b.tabs.length - a.tabs.length || a.title.localeCompare(b.title))) {
     const heading = element('div', 'site-head');
-    heading.append(element('span', 'site-name', bucket.title), element('span', 'site-count', String(bucket.tabs.length)));
+    heading.append(element('span', 'site-name', bucket.title));
+    const side = element('span', 'site-side');
+    const site = bucket.key.startsWith('site:') ? bucket.key.slice(5) : null;
+    if (site) {
+      const excludedNow = isExcluded(`https://${site}/`, excludedSites);
+      const toggle = element('button', 'site-exclude', excludedNow ? 'Not auto-grouped' : "Don't auto-group");
+      toggle.type = 'button';
+      toggle.disabled = excludedNow;
+      toggle.setAttribute('aria-label', excludedNow ? `${site} is not auto-grouped. Change this in Settings.` : `Never auto-group ${site}`);
+      toggle.addEventListener('click', () => excludeSite(site));
+      side.append(toggle);
+    }
+    side.append(element('span', 'site-count', String(bucket.tabs.length)));
+    heading.append(side);
     container.append(heading);
     for (const tab of bucket.tabs) container.append(makeTab(tab));
   }
   updateKeyboardSelection();
+}
+
+async function excludeSite(site) {
+  const { excludedSites: saved } = await chrome.storage.local.get('excludedSites');
+  excludedSites = sanitizeExclusions([...(saved || []), site]);
+  await chrome.storage.local.set({ excludedSites });
+  $('status').textContent = `${site} won't be auto-grouped. Existing groups stay. Undo in Settings.`;
+  render();
 }
 
 function updateKeyboardSelection() {
@@ -303,7 +326,7 @@ $('selectExtras').addEventListener('click', () => {
 $('closeDuplicates').addEventListener('click', async () => {
   const requested = [...selectedDuplicateIds];
   if (!requested.length) return;
-  const accepted = window.confirm(`Close ${requested.length} selected duplicate tab(s)?\n\nTabs may contain unsaved data. Nothing is closed until you confirm.`);
+  const accepted = window.confirm(`Close ${requested.length} selected duplicate tab(s)?\n\nTabs may contain unsaved data. Nothing is closed until you confirm.\n\nClosed by mistake? Reopen tabs with Ctrl+Shift+T (Cmd+Shift+T on Mac).`);
   if (!accepted) return;
   const button = $('closeDuplicates'); button.disabled = true;
   try {
