@@ -152,6 +152,19 @@ RELEASING.md          Release and Chrome Web Store checklist
 - [ ] Optional review-only suggestions for related links (such as Amazon product URLs with different tracking parameters)
 - [x] Integration tests using Chrome extension automation
 
+## How this was built
+
+DomainDock is designed and maintained by Andrew Yonan and built with **Claude**, Anthropic's AI model, as a coding partner. Using AI is a deliberate part of how this project is engineered, not something hidden.
+
+| Andrew decides | Claude does, under review |
+| --- | --- |
+| What to build and why, based on evidence | Drafts code, tests and documentation |
+| The privacy and permission model (no website access, nothing leaves the browser) | Reviews code, reproduces bugs and runs test passes in a real browser |
+| Which trade-offs and risks are acceptable | Proposes options and argues for and against them |
+| What merges | Opens pull requests for review |
+
+The guardrails apply to every change, whoever writes it. Each one goes through a pull request, must pass 42 unit tests and 11 end-to-end browser tests in CI, and merges into a protected `main` branch. Commits written with Claude carry a `Co-Authored-By: Claude` trailer from v0.5.0 on; some earlier commits were also made with Claude's help and predate the trailer.
+
 ## Releasing
 
 See [RELEASING.md](RELEASING.md) for the release and Chrome Web Store checklist.
