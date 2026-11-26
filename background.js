@@ -1,4 +1,4 @@
-import { DEFAULT_RULES, getCategory, sanitizeRules } from './lib/core.js';
+import { DEFAULT_RULES, getCategory, sanitizeExclusions, sanitizeRules } from './lib/core.js';
 import { reconcileWindow } from './lib/group-engine.js';
 
 const jobs = new Map();
@@ -20,38 +20,39 @@ async function updateReleased(change) {
 }
 
 async function settings() {
-  const state = await chrome.storage.local.get(['autoGroup', 'rules']);
+  const state = await chrome.storage.local.get(['autoGroup', 'rules', 'excludedSites']);
   return {
     autoGroup: state.autoGroup !== false,
     rules: sanitizeRules(state.rules ?? DEFAULT_RULES),
+    excluded: sanitizeExclusions(state.excludedSites),
   };
 }
 
-async function processWindow(windowId, rules) {
+async function processWindow(windowId, { rules, excluded }) {
   if (!Number.isInteger(windowId) || windowId < 0) return { groupsCreated: 0, tabsAdded: 0 };
   const sessionKey = `${SESSION_PREFIX}${windowId}`;
   const { [sessionKey]: old = {} } = await chrome.storage.session.get(sessionKey);
-  const outcome = await reconcileWindow(chrome, windowId, rules, old, await releasedTabs());
+  const outcome = await reconcileWindow(chrome, windowId, rules, old, await releasedTabs(), excluded);
   await chrome.storage.session.set({ [sessionKey]: outcome.managed });
   return outcome;
 }
 
-function enqueueWindow(windowId, rules) {
+function enqueueWindow(windowId, config) {
   const prev = jobs.get(windowId) || Promise.resolve();
-  const task = prev.catch(() => {}).then(() => navigator.locks.request(LOCK, () => processWindow(windowId, rules)));
+  const task = prev.catch(() => {}).then(() => navigator.locks.request(LOCK, () => processWindow(windowId, config)));
   jobs.set(windowId, task);
   task.finally(() => { if (jobs.get(windowId) === task) jobs.delete(windowId); }).catch(() => {});
   return task;
 }
 
 async function groupAll() {
-  const { rules } = await settings();
+  const config = await settings();
   const windows = await chrome.windows.getAll({ windowTypes: ['normal'] });
   let created = 0;
   let added = 0;
   for (const window of windows) {
     if (window.incognito) continue;
-    const result = await enqueueWindow(window.id, rules);
+    const result = await enqueueWindow(window.id, config);
     created += result.groupsCreated;
     added += result.tabsAdded;
   }
@@ -60,7 +61,7 @@ async function groupAll() {
 
 function autoProcess(windowId) {
   settings().then((current) => {
-    if (current.autoGroup) return enqueueWindow(windowId, current.rules);
+    if (current.autoGroup) return enqueueWindow(windowId, current);
   }).catch((error) => console.warn('DomainDock grouping skipped:', error?.message || 'Unknown error'));
 }
 
@@ -91,7 +92,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 chrome.tabs.onAttached.addListener((_id, data) => autoProcess(data.newWindowId));
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
-  if (changes.autoGroup?.newValue === true || changes.rules) {
+  if (changes.autoGroup?.newValue === true || changes.rules || changes.excludedSites) {
     settings().then((s) => { if (s.autoGroup) return groupAll(); }).catch(console.warn);
   }
 });

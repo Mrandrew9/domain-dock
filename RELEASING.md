@@ -4,7 +4,7 @@
 
 - [ ] Update `version` in both `manifest.json` and `package.json` (they must match).
 - [ ] Update the README (features, limitations, roadmap) for anything that changed.
-- [ ] Run `npm run check`. CI runs the same command on every push and pull request.
+- [ ] Run `npm run check` and `npm run test:browser`. CI runs both on every push and pull request.
 - [ ] Run the in-browser [manual checklist](MANUAL_TESTING.md) with the unpacked extension. Check the service worker console for errors.
 - [ ] Confirm no new permissions were added. If one was, update the README permissions table and [PRIVACY.md](PRIVACY.md).
 
