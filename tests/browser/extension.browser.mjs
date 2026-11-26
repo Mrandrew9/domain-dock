@@ -2,18 +2,22 @@
 // Tests run in order and share one browser, like a person using the extension.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { launchExtension, waitFor } from './harness.mjs';
 
+const fixtureDir = mkdtempSync(join(tmpdir(), 'domaindock-backup-test-'));
 let b;
 before(async () => {
   b = await launchExtension();
   // Wait for install-time setup to store defaults.
   await waitFor(async () => (await b.storage('autoGroup')).autoGroup === true, 'install defaults');
 });
-after(async () => { await b?.close(); });
+after(async () => {
+  try { await b?.close(); }
+  finally { rmSync(fixtureDir, { recursive: true, force: true }); }
+});
 
 const grouped = async (prefix) => (await b.tab(prefix))?.groupId > -1;
 
@@ -156,7 +160,7 @@ test('backup: export, wipe, and import (replace) restores everything', async () 
   const options = await b.open(b.ext('options.html'));
   const [download] = await Promise.all([options.waitForEvent('download'), options.click('#exportData')]);
   assert.match(download.suggestedFilename(), /^domaindock-backup-\d{4}-\d{2}-\d{2}\.json$/);
-  const file = join(tmpdir(), download.suggestedFilename());
+  const file = join(fixtureDir, download.suggestedFilename());
   await download.saveAs(file);
   const saved = JSON.parse(readFileSync(file, 'utf8'));
   assert.equal(saved.format, 'domaindock-backup');
@@ -177,7 +181,7 @@ test('backup: export, wipe, and import (replace) restores everything', async () 
 test('backup: an invalid file is rejected and nothing changes', async () => {
   const before = await b.storage(null);
   const options = b.context.pages().find((p) => p.url().startsWith(b.ext('options.html')));
-  const bad = join(tmpdir(), 'not-a-backup.json');
+  const bad = join(fixtureDir, 'not-a-backup.json');
   writeFileSync(bad, JSON.stringify({ hello: 'world' }));
   await options.setInputFiles('#importFile', bad);
   await waitFor(async () => /not a DomainDock backup/.test(await options.locator('#backupMessage').innerText()), 'rejection message');

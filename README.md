@@ -154,16 +154,7 @@ RELEASING.md          Release and Chrome Web Store checklist
 
 ## How this was built
 
-DomainDock is designed and maintained by Andrew Yonan and built with **Claude**, Anthropic's AI model, as a coding partner. Using AI is a deliberate part of how this project is engineered, not something hidden.
-
-| Andrew decides | Claude does, under review |
-| --- | --- |
-| What to build and why, based on evidence | Drafts code, tests and documentation |
-| The privacy and permission model (no website access, nothing leaves the browser) | Reviews code, reproduces bugs and runs test passes in a real browser |
-| Which trade-offs and risks are acceptable | Proposes options and argues for and against them |
-| What merges | Opens pull requests for review |
-
-The guardrails apply to every change, whoever writes it. Each one goes through a pull request, must pass 42 unit tests and 11 end-to-end browser tests in CI, and merges into a protected `main` branch. Commits written with Claude carry a `Co-Authored-By: Claude` trailer from v0.5.0 on; some earlier commits were also made with Claude's help and predate the trailer.
+Andrew Yonan designs and maintains DomainDock. Claude helped draft the v0.5 backup, grouping exclusions and browser tests. Andrew reviews changes and decides what ships. GitHub Actions runs the unit checks and loads the extension in Chromium to exercise the main workflows.
 
 ## Releasing
 

@@ -60,7 +60,7 @@ test('cleans imported values like typed input and strips secrets from URLs', () 
   assert.deepEqual(parsed.data.excludedSites, ['good.example']);
   assert.equal(parsed.data.incidentChecklist, null, 'an invalid checklist would break the Review & focus page');
   assert.equal(parsed.data.autoGroup, null);
-  assert.equal(parsed.skipped, 3);
+  assert.equal(parsed.skipped, 4);
 });
 
 test('merge adds to existing data without clobbering rules or settings', () => {
@@ -80,4 +80,16 @@ test('merge adds to existing data without clobbering rules or settings', () => {
   assert.equal(merged.incidentChecklist, undefined, 'existing checklist kept');
   assert.equal(merged.autoGroup, undefined, 'existing setting kept');
   assert.throws(() => applyBackup(current, parsed.data, 'overwrite'), /merge or replace/);
+});
+
+test('settings-only restores preserve labels and an empty checklist clears the saved one', () => {
+  const partial = data => parseBackup(JSON.stringify({ format: BACKUP_FORMAT, version: 1, data }));
+  const parsed = partial({ incidentChecklist: '', autoGroup: false });
+  assert.equal(parsed.ok, true);
+  assert.deepEqual(applyBackup(state, parsed.data, 'replace'), { incidentChecklist: '', autoGroup: false });
+  assert.equal(Object.hasOwn(applyBackup(state, parsed.data, 'merge'), 'annotations'), false);
+  for (const malformed of [null, [], {}, {annotations: []}, {annotations: null}]) {
+    assert.equal(partial(malformed).ok, false);
+  }
+  assert.deepEqual(applyBackup(state, partial({ annotations: {} }).data, 'replace'), {annotations: {}});
 });

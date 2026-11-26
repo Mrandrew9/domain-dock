@@ -275,8 +275,13 @@ function render() {
 
 async function excludeSite(site) {
   const { excludedSites: saved } = await chrome.storage.local.get('excludedSites');
-  excludedSites = sanitizeExclusions([...(saved || []), site]);
-  await chrome.storage.local.set({ excludedSites });
+  const updated = sanitizeExclusions([...sanitizeExclusions(saved), site]);
+  if (!updated.includes(site)) {
+    $('status').textContent = 'Could not add this site. Review the exclusion list in Settings.';
+    return;
+  }
+  await chrome.storage.local.set({ excludedSites: updated });
+  excludedSites = updated;
   $('status').textContent = `${site} won't be auto-grouped. Existing groups stay. Undo in Settings.`;
   render();
 }

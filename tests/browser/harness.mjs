@@ -36,15 +36,29 @@ function startServer() {
 export async function launchExtension() {
   const server = await startServer();
   const profile = mkdtempSync(join(tmpdir(), 'domaindock-'));
-  const context = await chromium.launchPersistentContext(profile, {
-    ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : { channel: 'chromium' }),
-    headless: false,
-    viewport: null,
-    acceptDownloads: true,
-    args: ['--headless=new', `--disable-extensions-except=${EXTENSION_DIR}`, `--load-extension=${EXTENSION_DIR}`,
-      `--host-resolver-rules=MAP * 127.0.0.1:${server.address().port}, EXCLUDE localhost`, '--no-first-run'],
-  });
-  const worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker', { timeout: 20000 });
+  let context;
+  let worker;
+  async function close() {
+    try { await context?.close(); }
+    finally {
+      server.close();
+      rmSync(profile, { recursive: true, force: true });
+    }
+  }
+  try {
+    context = await chromium.launchPersistentContext(profile, {
+      ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : { channel: 'chromium' }),
+      headless: false,
+      viewport: null,
+      acceptDownloads: true,
+      args: ['--headless=new', `--disable-extensions-except=${EXTENSION_DIR}`, `--load-extension=${EXTENSION_DIR}`,
+        `--host-resolver-rules=MAP * 127.0.0.1:${server.address().port}, EXCLUDE localhost`, '--no-first-run'],
+    });
+    worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker', { timeout: 20000 });
+  } catch (error) {
+    await close();
+    throw error;
+  }
   const id = new URL(worker.url()).host;
   const errors = [];
   worker.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text()); });
@@ -57,7 +71,7 @@ export async function launchExtension() {
     storage: (keys) => sw((k) => chrome.storage.local.get(k), keys),
     async tab(prefix) { return (await browser.tabs()).find((t) => t.url.startsWith(prefix)); },
     async open(url) { const page = await context.newPage(); await page.goto(url); return page; },
-    async close() { await context.close(); server.close(); rmSync(profile, { recursive: true, force: true }); },
+    close,
   };
   return browser;
 }

@@ -2,6 +2,8 @@ name: Extension checks
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,7 +29,7 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Install development dependencies (Playwright only)
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Install Chromium for testing
         run: npx playwright install --with-deps chromium
       - name: Run the extension in Chromium and test it end to end

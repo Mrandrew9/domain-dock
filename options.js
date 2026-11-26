@@ -1,11 +1,12 @@
 import { DEFAULT_RULES, GROUP_COLORS, MAX_EXCLUDED_SITES, normalizeDomain, safeLabel, sanitizeExclusions, sanitizeRules } from './lib/core.js';
-import { applyBackup, backupFileName, createBackup, parseBackup } from './lib/backup.js';
+import { applyBackup, backupFileName, createBackup, MAX_BACKUP_BYTES, parseBackup } from './lib/backup.js';
 
 const $ = (id) => document.getElementById(id);
 const colorMap = { grey:'#a7b1c7', blue:'#57a6ff', red:'#ff6e79', yellow:'#e8bb55', green:'#50d7a2', pink:'#f39acd', purple:'#a398ff', cyan:'#5fdcdb', orange:'#ffa455' };
 let rules = [];
 let excluded = [];
 let pendingImport = null;
+let importRequest = 0;
 
 function render() {
   const list = $('rules'); list.replaceChildren();
@@ -112,13 +113,30 @@ $('importFile').addEventListener('change', async () => {
   const file = $('importFile').files?.[0];
   $('importFile').value = '';
   if (!file) return;
-  const result = parseBackup(await file.text());
+  const request = ++importRequest;
+  pendingImport = null;
+  $('importPreview').hidden = true;
+  if (file.size > MAX_BACKUP_BYTES) {
+    $('backupMessage').textContent = 'This file is larger than 5 MB and was not imported.';
+    return;
+  }
+  let result;
+  try {
+    result = parseBackup(await file.text());
+  } catch {
+    if (request === importRequest) $('backupMessage').textContent = 'Could not read this backup. Choose a valid DomainDock JSON file.';
+    return;
+  }
+  if (request !== importRequest) return;
   if (!result.ok) { pendingImport = null; $('importPreview').hidden = true; $('backupMessage').textContent = result.error; return; }
+  const replace = document.querySelector('input[name="importMode"][value="replace"]');
+  replace.disabled = result.skipped > 0;
+  document.querySelector('input[name="importMode"][value="merge"]').checked = true;
   pendingImport = result;
   const c = result.counts;
   const parts = [`${c.labels} label${c.labels === 1 ? '' : 's'}`, `${c.rules} rule${c.rules === 1 ? '' : 's'}`, `${c.excludedSites} excluded site${c.excludedSites === 1 ? '' : 's'}`];
   if (c.checklist) parts.push('an incident checklist');
-  $('importSummary').textContent = `${file.name} contains ${parts.join(', ')}.${result.skipped ? ` ${result.skipped} invalid item${result.skipped === 1 ? ' was' : 's were'} skipped.` : ''}`;
+  $('importSummary').textContent = `${file.name} contains ${parts.join(', ')}.${result.skipped ? ` ${result.skipped} invalid item${result.skipped === 1 ? ' was' : 's were'} skipped. Only Merge is available.` : ''}`;
   $('importPreview').hidden = false;
   $('backupMessage').textContent = '';
   $('applyImport').focus();
@@ -131,10 +149,11 @@ $('cancelImport').addEventListener('click', () => {
 $('applyImport').addEventListener('click', async () => {
   if (!pendingImport) return;
   const mode = document.querySelector('input[name="importMode"]:checked')?.value;
+  const imported = pendingImport.data;
   if (mode === 'replace' && !window.confirm('Replace your current labels and settings with this backup? This cannot be undone.')) return;
   try {
     const current = await chrome.storage.local.get(STORED_KEYS);
-    await chrome.storage.local.set(applyBackup(current, pendingImport.data, mode));
+    await chrome.storage.local.set(applyBackup(current, imported, mode));
     pendingImport = null; $('importPreview').hidden = true;
     await init();
     $('backupMessage').textContent = mode === 'replace' ? 'Backup restored.' : 'Backup merged.';
